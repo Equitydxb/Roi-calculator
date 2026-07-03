@@ -25,7 +25,7 @@
         .accent-gold { color: var(--equity-gold); }
         .accent-gold-bg { background-color: var(--equity-gold); }
         
-        /* Strict positioning bounds to force dynamic compaction and stop multi-page overflow */
+        /* HARD OVERRIDE: Strict dimensions to fit exactly on a single standard page */
         #pdfTemplate {
             box-sizing: border-box;
             width: 794px; 
@@ -59,7 +59,7 @@
         .compact-mode #pdfTemplate .mb-6, .compact-mode #pdfTemplate .mb-5 { margin-bottom: 0.75rem !important; }
         .compact-mode #pdfTemplate .mb-4 { margin-bottom: 0.55rem !important; }
         .compact-mode #pdfTemplate .space-y-4 > :not([prose]) ~ :not([prose]) { margin-top: 0.5rem !important; }
-        .compact-mode #pdfTemplate table td { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+        .compact-mode #pdfTemplate table td { padding-top: 0.35rem !important; padding-bottom: 0.35rem !important; }
 
         /* Dynamic Placeholder design layout state */
         .placeholder-text {
@@ -126,18 +126,38 @@
 
                 <div class="grid grid-cols-2 gap-2 border-t pt-2">
                     <div>
+                        <label class="block text-xs font-bold text-emerald-900">DLD Transfer Fee %</label>
+                        <select id="inputDLDRate" class="mt-1 block w-full rounded-md border p-2 text-sm bg-emerald-50 border-emerald-300 font-semibold text-emerald-950" onchange="updateProposal()">
+                            <option value="0.04" selected>4% Rate (Standard)</option>
+                            <option value="0.05">5% Rate (Premium/Varying)</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-medium text-gray-600">Sales Progression (inc VAT)</label>
                         <input type="number" id="inputSalesProg" placeholder="e.g. 7875" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
                     </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-600">Trustee Fee</label>
                         <input type="number" id="inputTrustee" placeholder="e.g. 4200" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Annual Service Charges</label>
+                        <input type="number" id="inputService" placeholder="e.g. 23523" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Annual Service Charges (AED)</label>
-                    <input type="number" id="inputService" placeholder="e.g. 23523" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                <div class="bg-gray-50 p-2.5 rounded-md border border-gray-200">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="inputFitOutToggle" class="rounded text-emerald-800 focus:ring-emerald-800 h-4 w-4" onchange="updateProposal()">
+                        <label for="inputFitOutToggle" class="text-xs font-bold text-gray-700">Include Optional Fit-Out Cost</label>
+                    </div>
+                    <div id="fitOutInputWrapper" class="hidden mt-2">
+                        <label class="block text-[11px] font-medium text-gray-500">Fit-Out Budget Amount (AED)</label>
+                        <input type="number" id="inputFitOutValue" placeholder="e.g. 50000" class="mt-1 block w-full rounded-md border p-1.5 text-sm" oninput="updateProposal()">
+                    </div>
                 </div>
 
                 <div class="border-t pt-2">
@@ -200,7 +220,9 @@
                         </div>
                     </div>
 
-                    <h3 class="text-xs font-black brand-text mb-2.5 uppercase tracking-[0.15em]">Initial Capital Outlay Breakdown</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">Initial Capital Outlay Breakdown</h3>
+                    </div>
                     <table class="w-full text-left text-xs mb-5 border-collapse shadow-sm rounded-lg overflow-hidden">
                         <thead>
                             <tr class="brand-bg text-white text-[10px] uppercase tracking-widest">
@@ -210,10 +232,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 text-xs text-gray-700">
                             <tr><td class="p-2.5">Capital Purchase Price</td><td class="p-2.5 text-right font-semibold text-gray-900" id="viewPrice"></td></tr>
-                            <tr><td class="p-2.5 text-gray-400">DLD Asset Transfer Fee (4%)</td><td class="p-2.5 text-right text-gray-900" id="viewDLD"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400" id="viewDLDLabel">DLD Asset Transfer Fee</td><td class="p-2.5 text-right text-gray-900" id="viewDLD"></td></tr>
                             <tr><td class="p-2.5 text-gray-400">Equity Agency Allocation (2% + VAT)</td><td class="p-2.5 text-right text-gray-900" id="viewAgency"></td></tr>
                             <tr><td class="p-2.5 text-gray-400">Sales Progression Management</td><td class="p-2.5 text-right text-gray-900" id="viewSalesProg"></td></tr>
                             <tr><td class="p-2.5 text-gray-400">Registration Trustee Settlement</td><td class="p-2.5 text-right text-gray-900" id="viewTrustee"></td></tr>
+                            <tr id="viewFitOutRow" class="hidden"><td class="p-2.5 text-gray-400">Fit-Out Allocation Expenses</td><td class="p-2.5 text-right text-gray-900 font-medium" id="viewFitOut"></td></tr>
                             <tr class="brand-light-bg font-black brand-text border-t-2 border-b-2 border-black">
                                 <td class="p-2.5 uppercase tracking-wider text-[10px]">Total Liquid Capital Requirement</td>
                                 <td class="p-2.5 text-right text-sm" id="viewTotalCost"></td>
@@ -235,7 +258,7 @@
                     </div>
 
                     <div id="sectionMultiYear" class="hidden space-y-4">
-                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">5-Year Growth Optimization Schedule</h3>
+                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">5-Year Growth & Value Optimization Schedule</h3>
                         <table class="w-full text-left text-xs border-collapse shadow-sm rounded-lg overflow-hidden">
                             <thead>
                                 <tr class="brand-bg text-white uppercase tracking-widest text-[9px]">
@@ -313,7 +336,6 @@
             }
         }
 
-        // Helper function to handle fallback placeholder strings
         function setTextOrPlaceholder(elementId, value, placeholderStr) {
             const element = document.getElementById(elementId);
             if (value && value.toString().trim() !== "" && value !== 0) {
@@ -339,6 +361,19 @@
             const service = parseFloat(document.getElementById('inputService').value) || 0;
             const salesProg = parseFloat(document.getElementById('inputSalesProg').value) || 0;
             const trustee = parseFloat(document.getElementById('inputTrustee').value) || 0;
+            
+            // DLD & Fit Out Additions
+            const dldRate = parseFloat(document.getElementById('inputDLDRate').value) || 0.04;
+            const fitOutToggle = document.getElementById('inputFitOutToggle').checked;
+            const fitOutWrapper = document.getElementById('fitOutInputWrapper');
+            
+            if (fitOutToggle) {
+                fitOutWrapper.classList.remove('hidden');
+            } else {
+                fitOutWrapper.classList.add('hidden');
+            }
+            
+            const fitOutValue = fitOutToggle ? (parseFloat(document.getElementById('inputFitOutValue').value) || 0) : 0;
 
             const rentY1 = parseFloat(document.getElementById('inputRentY1').value) || 0;
             const rentY2 = parseFloat(document.getElementById('inputRentY2').value) || 0;
@@ -346,15 +381,16 @@
             const rentY4 = parseFloat(document.getElementById('inputRentY4').value) || 0;
             const rentY5 = parseFloat(document.getElementById('inputRentY5').value) || 0;
 
-            // Operational calculations logic
-            const dld = price * 0.04;
+            // Updated Calculation Logic
+            const dld = price * dldRate;
             const agency = (price * 0.02) * 1.05; 
-            const totalCost = price + dld + agency + salesProg + trustee;
+            const totalCost = price + dld + agency + salesProg + trustee + fitOutValue;
 
             const netRentSingle = rentY1 - service;
             const roiSingle = totalCost > 0 ? (netRentSingle / totalCost) * 100 : 0;
 
-            // Render text string variables with placeholder fallback safeguards
+            // Render variables with placeholder safety checks
+            document.getElementById('viewDLDLabel').innerText = `DLD Asset Transfer Fee (${dldRate * 100}%)`;
             setTextOrPlaceholder('viewLocation', location, '[Enter Location]');
             setTextOrPlaceholder('viewBuilding', building, '[Enter Building Name]');
             setTextOrPlaceholder('viewResComm', resComm, 'Commercial');
@@ -369,6 +405,16 @@
             setTextOrPlaceholder('viewAgency', price ? "AED " + agency.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewSalesProg', salesProg ? "AED " + salesProg.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewTrustee', trustee ? "AED " + trustee.toLocaleString() : "", '—');
+            
+            // Conditional rendering logic for optional Fit Out row
+            const fitOutRow = document.getElementById('viewFitOutRow');
+            if (fitOutToggle && fitOutValue > 0) {
+                fitOutRow.classList.remove('hidden');
+                setTextOrPlaceholder('viewFitOut', "AED " + fitOutValue.toLocaleString(), '—');
+            } else {
+                fitOutRow.classList.add('hidden');
+            }
+            
             setTextOrPlaceholder('viewTotalCost', price ? "AED " + totalCost.toLocaleString() : "", '—');
 
             // Render Single Year Analytics
