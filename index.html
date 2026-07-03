@@ -59,7 +59,7 @@
         .compact-mode #pdfTemplate .mb-6, .compact-mode #pdfTemplate .mb-5 { margin-bottom: 0.75rem !important; }
         .compact-mode #pdfTemplate .mb-4 { margin-bottom: 0.55rem !important; }
         .compact-mode #pdfTemplate .space-y-4 > :not([prose]) ~ :not([prose]) { margin-top: 0.5rem !important; }
-        .compact-mode #pdfTemplate table td { padding-top: 0.35rem !important; padding-bottom: 0.35rem !important; }
+        .compact-mode #pdfTemplate table td { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
 
         /* Dynamic Placeholder design layout state */
         .placeholder-text {
@@ -144,7 +144,14 @@
                         <input type="number" id="inputTrustee" placeholder="e.g. 4200" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Annual Service Charges</label>
+                        <label class="block text-xs font-medium text-gray-600">Title Deed Fee (AED)</label>
+                        <input type="number" id="inputTitleDeed" placeholder="e.g. 580" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Annual Service Charges (AED)</label>
                         <input type="number" id="inputService" placeholder="e.g. 23523" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
                     </div>
                 </div>
@@ -220,9 +227,7 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">Initial Capital Outlay Breakdown</h3>
-                    </div>
+                    <h3 class="text-xs font-black brand-text mb-2 uppercase tracking-[0.15em]">Initial Capital Outlay Breakdown</h3>
                     <table class="w-full text-left text-xs mb-5 border-collapse shadow-sm rounded-lg overflow-hidden">
                         <thead>
                             <tr class="brand-bg text-white text-[10px] uppercase tracking-widest">
@@ -236,6 +241,7 @@
                             <tr><td class="p-2.5 text-gray-400">Equity Agency Allocation (2% + VAT)</td><td class="p-2.5 text-right text-gray-900" id="viewAgency"></td></tr>
                             <tr><td class="p-2.5 text-gray-400">Sales Progression Management</td><td class="p-2.5 text-right text-gray-900" id="viewSalesProg"></td></tr>
                             <tr><td class="p-2.5 text-gray-400">Registration Trustee Settlement</td><td class="p-2.5 text-right text-gray-900" id="viewTrustee"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400">Title Deed Issuance Fee</td><td class="p-2.5 text-right text-gray-900" id="viewTitleDeed"></td></tr>
                             <tr id="viewFitOutRow" class="hidden"><td class="p-2.5 text-gray-400">Fit-Out Allocation Expenses</td><td class="p-2.5 text-right text-gray-900 font-medium" id="viewFitOut"></td></tr>
                             <tr class="brand-light-bg font-black brand-text border-t-2 border-b-2 border-black">
                                 <td class="p-2.5 uppercase tracking-wider text-[10px]">Total Liquid Capital Requirement</td>
@@ -361,6 +367,7 @@
             const service = parseFloat(document.getElementById('inputService').value) || 0;
             const salesProg = parseFloat(document.getElementById('inputSalesProg').value) || 0;
             const trustee = parseFloat(document.getElementById('inputTrustee').value) || 0;
+            const titleDeed = parseFloat(document.getElementById('inputTitleDeed').value) || 0;
             
             // DLD & Fit Out Additions
             const dldRate = parseFloat(document.getElementById('inputDLDRate').value) || 0.04;
@@ -384,7 +391,7 @@
             // Updated Calculation Logic
             const dld = price * dldRate;
             const agency = (price * 0.02) * 1.05; 
-            const totalCost = price + dld + agency + salesProg + trustee + fitOutValue;
+            const totalCost = price + dld + agency + salesProg + trustee + titleDeed + fitOutValue;
 
             const netRentSingle = rentY1 - service;
             const roiSingle = totalCost > 0 ? (netRentSingle / totalCost) * 100 : 0;
@@ -405,6 +412,7 @@
             setTextOrPlaceholder('viewAgency', price ? "AED " + agency.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewSalesProg', salesProg ? "AED " + salesProg.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewTrustee', trustee ? "AED " + trustee.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewTitleDeed', titleDeed ? "AED " + titleDeed.toLocaleString() : "", '—');
             
             // Conditional rendering logic for optional Fit Out row
             const fitOutRow = document.getElementById('viewFitOutRow');
@@ -462,7 +470,6 @@
             }).save();
         }
 
-        // Run Initial fallback update on load
         updateProposal();
     </script>
 </body>
