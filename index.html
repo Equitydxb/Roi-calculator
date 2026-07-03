@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Real Estate - Premium ROI Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Equity Real Estate Brand Styles Integration */
+        :root {
+            --equity-primary: #010101;
+            --equity-secondary: #1E3E39; 
+            --equity-gold: #D4AF37;
+            --equity-light-mint: #F4F6F5;
+        }
+        .brand-bg { background-color: var(--equity-primary); }
+        .brand-text { color: var(--equity-primary); }
+        .brand-border { border-color: var(--equity-primary); }
+        .brand-light-bg { background-color: var(--equity-light-mint); }
+        
+        .secondary-brand-bg { background-color: var(--equity-secondary); }
+        .secondary-brand-text { color: var(--equity-secondary); }
+        
+        .accent-gold { color: var(--equity-gold); }
+        .accent-gold-bg { background-color: var(--equity-gold); }
+        
+        /* Strict positioning bounds to force dynamic compaction and stop multi-page overflow */
+        #pdfTemplate {
+            box-sizing: border-box;
+            width: 794px; 
+            height: 1040px;
+            max-height: 1040px;
+            padding: 24px 45px 30px 45px !important;
+            margin: 0 auto !important; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Print Specific CSS Overrides */
+        @media print {
+            html, body {
+                height: 100%;
+                overflow: hidden;
+                background: #FFF;
+            }
+            #pdfTemplate {
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                break-after: avoid !important;
+            }
+        }
+        
+        /* Compact layout engine scaling for Multi-Year page fit */
+        .compact-mode #pdfTemplate .p-5 { padding: 0.75rem !important; }
+        .compact-mode #pdfTemplate .mb-6, .compact-mode #pdfTemplate .mb-5 { margin-bottom: 0.75rem !important; }
+        .compact-mode #pdfTemplate .mb-4 { margin-bottom: 0.55rem !important; }
+        .compact-mode #pdfTemplate .space-y-4 > :not([prose]) ~ :not([prose]) { margin-top: 0.5rem !important; }
+        .compact-mode #pdfTemplate table td { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+
+        /* Dynamic Placeholder design layout state */
+        .placeholder-text {
+            color: #a1a1aa !important;
+            font-style: italic;
+            font-weight: 400 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6 font-sans">
+
+    <div id="appContainer" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow-md h-fit max-h-[95vh] overflow-y-auto">
+            <div class="flex items-center space-x-3 mb-4 border-b pb-3">
+                <div class="w-3 h-6 brand-bg rounded-sm"></div>
+                <h2 class="text-xl font-bold text-gray-800">Equity Proposal Engine</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Analysis Mode</label>
+                    <select id="inputType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border font-semibold text-gray-900" onchange="toggleYearInputs(); updateProposal();">
+                        <option value="single">Single Year Performance</option>
+                        <option value="multi">Multi-Year Forecast (5 Years)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Location</label>
+                        <input type="text" id="inputLocation" placeholder="e.g. Business Bay" class="mt-1 block w-full rounded-md border p-2 text-sm focus:ring-1 focus:ring-gray-800" oninput="updateProposal()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Building Name</label>
+                        <input type="text" id="inputBuilding" placeholder="e.g. Empire Heights" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Sector Classification</label>
+                        <select id="inputResComm" class="mt-1 block w-full rounded-md border p-2 text-sm" onchange="updateProposal()">
+                            <option value="Commercial">Commercial</option>
+                            <option value="Residential">Residential</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">View Status</label>
+                        <input type="text" id="inputView" placeholder="e.g. Canal View" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Total Size (Sqft)</label>
+                        <input type="number" id="inputSize" placeholder="e.g. 1412" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Selling Price (AED)</label>
+                        <input type="number" id="inputPrice" placeholder="e.g. 3100000" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 border-t pt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Sales Progression (inc VAT)</label>
+                        <input type="number" id="inputSalesProg" placeholder="e.g. 7875" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Trustee Fee</label>
+                        <input type="number" id="inputTrustee" placeholder="e.g. 4200" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">Annual Service Charges (AED)</label>
+                    <input type="number" id="inputService" placeholder="e.g. 23523" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                </div>
+
+                <div class="border-t pt-2">
+                    <h3 class="text-sm font-bold text-gray-700 mb-2">Rental Yield Configuration</h3>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Base Rent Year 1 (AED)</label>
+                        <input type="number" id="inputRentY1" placeholder="e.g. 310000" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                    </div>
+                    
+                    <div id="multiYearInputs" class="hidden space-y-2 mt-2 bg-gray-50 p-3 rounded-md">
+                        <p class="text-xs font-bold brand-text uppercase tracking-wider">Manual Multi-Year Schedules</p>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Year 2 Rent (AED)</label>
+                            <input type="number" id="inputRentY2" placeholder="e.g. 277240" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Year 3 Rent (AED)</label>
+                            <input type="number" id="inputRentY3" placeholder="e.g. 291102" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Year 4 Rent (AED)</label>
+                            <input type="number" id="inputRentY4" placeholder="e.g. 305657" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Year 5 Rent (AED)</label>
+                            <input type="number" id="inputRentY5" placeholder="e.g. 320940" class="mt-1 block w-full rounded-md border p-2 text-sm" oninput="updateProposal()">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="generatePDF()" class="mt-2 w-full brand-bg hover:opacity-90 text-white font-bold py-3 px-4 rounded-md transition shadow-md uppercase tracking-wide text-sm">
+                    Generate Equity Branded PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-white shadow-xl rounded-lg overflow-x-auto p-2">
+            <div id="pdfTemplate">
+                
+                <div class="w-full flex-1 flex flex-col justify-start">
+                    
+                    <div class="flex flex-col items-center border-b-[3px] brand-border pb-4 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="360" height="55" viewBox="0 0 350 60" class="mb-1">
+                            <text x="50%" y="36" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight='900' font-size='36' fill='%23010101' text-anchor='middle' letter-spacing='6'>EQUITY</text>
+                            <text x="50%" y="55" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight='bold' font-size='10' fill='%2371717a' text-anchor='middle' letter-spacing='7'>REAL ESTATE</text>
+                        </svg>
+                        <div class="w-full flex justify-center items-center text-[10px] text-gray-400 font-extrabold uppercase tracking-[0.25em] mt-1.5">
+                            <span>Asset Investment Brief</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-y-2 gap-x-6 mb-5 border-t-2 brand-border shadow-sm text-sm">
+                        <p><span class="font-bold text-gray-400 uppercase tracking-wider text-[10px] block mb-0.5">Location</span> <span id="viewLocation" class="font-medium text-gray-900 text-base"></span></p>
+                        <p><span class="font-bold text-gray-400 uppercase tracking-wider text-[10px] block mb-0.5">Asset/Building</span> <span id="viewBuilding" class="font-medium text-gray-900 text-base"></span></p>
+                        <p><span class="font-bold text-gray-400 uppercase tracking-wider text-[10px] block mb-0.5">Classification</span> <span id="viewResComm" class="font-medium text-gray-900 text-base"></span></p>
+                        <p><span class="font-bold text-gray-400 uppercase tracking-wider text-[10px] block mb-0.5">View Orientation</span> <span id="viewView" class="font-medium text-gray-900 text-base"></span></p>
+                        <div class="col-span-2 border-t pt-2 mt-1 flex justify-between items-center">
+                            <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Net Usable Area Size:</span>
+                            <p class="text-base font-black brand-text"><span id="viewSize"></span> <span id="sizeUnit" class="text-xs text-gray-500 font-normal">Sqft</span></p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xs font-black brand-text mb-2.5 uppercase tracking-[0.15em]">Initial Capital Outlay Breakdown</h3>
+                    <table class="w-full text-left text-xs mb-5 border-collapse shadow-sm rounded-lg overflow-hidden">
+                        <thead>
+                            <tr class="brand-bg text-white text-[10px] uppercase tracking-widest">
+                                <th class="p-2.5 font-bold">Acquisition Element</th>
+                                <th class="p-2.5 text-right font-bold">Value (AED)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 text-xs text-gray-700">
+                            <tr><td class="p-2.5">Capital Purchase Price</td><td class="p-2.5 text-right font-semibold text-gray-900" id="viewPrice"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400">DLD Asset Transfer Fee (4%)</td><td class="p-2.5 text-right text-gray-900" id="viewDLD"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400">Equity Agency Allocation (2% + VAT)</td><td class="p-2.5 text-right text-gray-900" id="viewAgency"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400">Sales Progression Management</td><td class="p-2.5 text-right text-gray-900" id="viewSalesProg"></td></tr>
+                            <tr><td class="p-2.5 text-gray-400">Registration Trustee Settlement</td><td class="p-2.5 text-right text-gray-900" id="viewTrustee"></td></tr>
+                            <tr class="brand-light-bg font-black brand-text border-t-2 border-b-2 border-black">
+                                <td class="p-2.5 uppercase tracking-wider text-[10px]">Total Liquid Capital Requirement</td>
+                                <td class="p-2.5 text-right text-sm" id="viewTotalCost"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="sectionSingleYear" class="space-y-4">
+                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">Year 1 Yield Analytics</h3>
+                        <div class="grid grid-cols-2 gap-4 text-xs bg-gray-50 p-3 rounded-md mb-2">
+                            <p class="flex justify-between"><span class="font-medium text-gray-500">Gross Contract Rent:</span> <span id="viewGrossRentSingle" class="font-bold text-gray-900"></span></p>
+                            <p class="flex justify-between pl-4 border-l border-gray-200"><span class="font-medium text-gray-500">Service Charges:</span> <span id="viewServiceSingle" class="font-bold text-red-700"></span></p>
+                        </div>
+                        <div class="secondary-brand-bg border-l-[6px] brand-border p-5 rounded-r-lg text-center shadow-sm">
+                            <p class="text-xs font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Projected Net Portfolio Yield (ROI)</p>
+                            <h2 class="text-5xl font-black accent-gold my-1 tracking-tight" id="viewROISingle"></h2>
+                            <p class="text-[10px] text-gray-300 font-medium opacity-80">Net asset yield calculated strictly post all sovereign and agency initial transaction charges</p>
+                        </div>
+                    </div>
+
+                    <div id="sectionMultiYear" class="hidden space-y-4">
+                        <h3 class="text-xs font-black brand-text uppercase tracking-[0.15em]">5-Year Growth Optimization Schedule</h3>
+                        <table class="w-full text-left text-xs border-collapse shadow-sm rounded-lg overflow-hidden">
+                            <thead>
+                                <tr class="brand-bg text-white uppercase tracking-widest text-[9px]">
+                                    <th class="p-2.5">Performance Metrics</th>
+                                    <th class="p-2.5 text-right">Year 1</th>
+                                    <th class="p-2.5 text-right">Year 2</th>
+                                    <th class="p-2.5 text-right">Year 3</th>
+                                    <th class="p-2.5 text-right">Year 4</th>
+                                    <th class="p-2.5 text-right">Year 5</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 text-xs text-gray-700">
+                                <tr>
+                                    <td class="p-2.5 font-medium">Scheduled Gross Rent</td>
+                                    <td class="p-2.5 text-right font-bold brand-text" id="mRentY1"></td>
+                                    <td class="p-2.5 text-right font-semibold" id="mRentY2"></td>
+                                    <td class="p-2.5 text-right font-semibold" id="mRentY3"></td>
+                                    <td class="p-2.5 text-right font-semibold" id="mRentY4"></td>
+                                    <td class="p-2.5 text-right font-semibold" id="mRentY5"></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-gray-400 font-normal">Gross Value per Sqft</td>
+                                    <td class="p-2.5 text-right text-gray-500" id="mSqftY1"></td>
+                                    <td class="p-2.5 text-right text-gray-500" id="mSqftY2"></td>
+                                    <td class="p-2.5 text-right text-gray-500" id="mSqftY3"></td>
+                                    <td class="p-2.5 text-right text-gray-500" id="mSqftY4"></td>
+                                    <td class="p-2.5 text-right text-gray-500" id="mSqftY5"></td>
+                                </tr>
+                                <tr class="secondary-brand-bg font-bold text-white border-t-2 border-b border-black">
+                                    <td class="p-2.5 uppercase tracking-wider text-[10px]">Net Return (ROI)</td>
+                                    <td class="p-2.5 text-right accent-gold text-sm font-black" id="mRoiY1"></td>
+                                    <td class="p-2.5 text-right accent-gold text-sm font-black" id="mRoiY2"></td>
+                                    <td class="p-2.5 text-right accent-gold text-sm font-black" id="mRoiY3"></td>
+                                    <td class="p-2.5 text-right accent-gold text-sm font-black" id="mRoiY4"></td>
+                                    <td class="p-2.5 text-right accent-gold text-sm font-black" id="mRoiY5"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="secondary-brand-bg p-3.5 rounded-lg text-white text-center font-bold text-xs tracking-wide shadow-md">
+                            Aggregated 5-Year Portfolio Lease Value: <span id="mTotalContract" class="accent-gold font-black text-sm ml-1"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-3 text-[10px] text-gray-400 font-bold tracking-wider mt-auto w-full">
+                    <div class="flex justify-between items-center">
+                        <div class="space-y-0.5">
+                            <p class="font-medium text-gray-500">Office 1902, Floor 19, Boulevard Plaza Tower 2 - Downtown Dubai - Dubai</p>
+                        </div>
+                        <div class="text-right uppercase tracking-[0.15em] font-black text-[9px]">
+                            <p>© 2026 Equity Real Estate</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleYearInputs() {
+            const type = document.getElementById('inputType').value;
+            const container = document.getElementById('appContainer');
+            if (type === 'multi') {
+                document.getElementById('multiYearInputs').classList.remove('hidden');
+                document.getElementById('sectionMultiYear').classList.remove('hidden');
+                document.getElementById('sectionSingleYear').classList.add('hidden');
+                container.classList.add('compact-mode');
+            } else {
+                document.getElementById('multiYearInputs').classList.add('hidden');
+                document.getElementById('sectionMultiYear').classList.add('hidden');
+                document.getElementById('sectionSingleYear').classList.remove('hidden');
+                container.classList.remove('compact-mode');
+            }
+        }
+
+        // Helper function to handle fallback placeholder strings
+        function setTextOrPlaceholder(elementId, value, placeholderStr) {
+            const element = document.getElementById(elementId);
+            if (value && value.toString().trim() !== "" && value !== 0) {
+                element.innerText = value;
+                element.classList.remove('placeholder-text');
+                return false;
+            } else {
+                element.innerText = placeholderStr;
+                element.classList.add('placeholder-text');
+                return true;
+            }
+        }
+
+        function updateProposal() {
+            // Raw values from form input
+            const location = document.getElementById('inputLocation').value;
+            const building = document.getElementById('inputBuilding').value;
+            const resComm = document.getElementById('inputResComm').value;
+            const view = document.getElementById('inputView').value;
+
+            const price = parseFloat(document.getElementById('inputPrice').value) || 0;
+            const size = parseFloat(document.getElementById('inputSize').value) || 0;
+            const service = parseFloat(document.getElementById('inputService').value) || 0;
+            const salesProg = parseFloat(document.getElementById('inputSalesProg').value) || 0;
+            const trustee = parseFloat(document.getElementById('inputTrustee').value) || 0;
+
+            const rentY1 = parseFloat(document.getElementById('inputRentY1').value) || 0;
+            const rentY2 = parseFloat(document.getElementById('inputRentY2').value) || 0;
+            const rentY3 = parseFloat(document.getElementById('inputRentY3').value) || 0;
+            const rentY4 = parseFloat(document.getElementById('inputRentY4').value) || 0;
+            const rentY5 = parseFloat(document.getElementById('inputRentY5').value) || 0;
+
+            // Operational calculations logic
+            const dld = price * 0.04;
+            const agency = (price * 0.02) * 1.05; 
+            const totalCost = price + dld + agency + salesProg + trustee;
+
+            const netRentSingle = rentY1 - service;
+            const roiSingle = totalCost > 0 ? (netRentSingle / totalCost) * 100 : 0;
+
+            // Render text string variables with placeholder fallback safeguards
+            setTextOrPlaceholder('viewLocation', location, '[Enter Location]');
+            setTextOrPlaceholder('viewBuilding', building, '[Enter Building Name]');
+            setTextOrPlaceholder('viewResComm', resComm, 'Commercial');
+            setTextOrPlaceholder('viewView', view, '[Enter View Status]');
+            
+            const sizeIsEmpty = setTextOrPlaceholder('viewSize', size ? size.toLocaleString() : "", '[Area Size]');
+            document.getElementById('sizeUnit').style.display = sizeIsEmpty ? 'none' : 'inline';
+
+            // Capital Breakdown fields
+            setTextOrPlaceholder('viewPrice', price ? "AED " + price.toLocaleString() : "", '[Price Missing]');
+            setTextOrPlaceholder('viewDLD', price ? "AED " + dld.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewAgency', price ? "AED " + agency.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewSalesProg', salesProg ? "AED " + salesProg.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewTrustee', trustee ? "AED " + trustee.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewTotalCost', price ? "AED " + totalCost.toLocaleString() : "", '—');
+
+            // Render Single Year Analytics
+            setTextOrPlaceholder('viewGrossRentSingle', rentY1 ? "AED " + rentY1.toLocaleString() : "", '[Rent Missing]');
+            setTextOrPlaceholder('viewServiceSingle', service ? "(AED " + service.toLocaleString() + ")" : "", '—');
+            document.getElementById('viewROISingle').innerText = rentY1 && price ? roiSingle.toFixed(2) + "%" : "0.00%";
+
+            // Render Multi Year Projections
+            const rents = [rentY1, rentY2, rentY3, rentY4, rentY5];
+            const totalContractSum = rents.reduce((a, b) => a + b, 0);
+
+            setTextOrPlaceholder('mTotalContract', totalContractSum ? "AED " + totalContractSum.toLocaleString() : "", '—');
+
+            for (let i = 1; i <= 5; i++) {
+                const currentRent = rents[i-1];
+                const netRentYear = currentRent - service;
+                const roiYear = totalCost > 0 ? (netRentYear / totalCost) * 100 : 0;
+
+                setTextOrPlaceholder(`mRentY${i}`, currentRent ? currentRent.toLocaleString() : "", '—');
+                setTextOrPlaceholder(`mSqftY${i}`, currentRent && size ? (currentRent / size).toFixed(2) : "", '—');
+                
+                const roiElement = document.getElementById(`mRoiY${i}`);
+                roiElement.innerText = currentRent && price ? roiYear.toFixed(2) + "%" : "—";
+                if(!currentRent || !price) roiElement.classList.add('placeholder-text');
+                else roiElement.classList.remove('placeholder-text');
+            }
+        }
+
+        function generatePDF() {
+            const element = document.getElementById('pdfTemplate');
+            const buildingName = document.getElementById('inputBuilding').value || "Asset";
+            const options = {
+                margin:       0,
+                filename:     `Equity_Investment_Proposal_${buildingName.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2.5, logging: false, letterRendering: true, scrollX: 0, scrollY: 0 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait', compress: true }
+            };
+            
+            html2pdf().from(element).set(options).toPdf().get('pdf').then(function (pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                if (totalPages > 1) {
+                    pdf.deletePage(2);
+                }
+            }).save();
+        }
+
+        // Run Initial fallback update on load
+        updateProposal();
+    </script>
+</body>
+</html>
