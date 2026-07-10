@@ -62,7 +62,7 @@
         .compact-mode #pdfTemplate .mb-6, .compact-mode #pdfTemplate .mb-5 { margin-bottom: 0.75rem !important; }
         .compact-mode #pdfTemplate .mb-4 { margin-bottom: 0.55rem !important; }
         .compact-mode #pdfTemplate .space-y-4 > :not([prose]) ~ :not([prose]) { margin-top: 0.5rem !important; }
-        .compact-mode #pdfTemplate table td { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
+        .compact-mode #pdfTemplate table td { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
 
         /* Dynamic Placeholder design layout state */
         .placeholder-text {
@@ -258,6 +258,8 @@
                             <tr><td class="p-2.5 text-gray-400">Title Deed Issuance Fee</td><td class="p-2.5 text-right text-gray-900" id="viewTitleDeed"></td></tr>
                             <!-- Hidden fit-out element that appears only when active -->
                             <tr id="viewFitOutRow" class="hidden"><td class="p-2.5 text-gray-400">Fit-Out Allocation Expenses</td><td class="p-2.5 text-right text-gray-900 font-medium" id="viewFitOut"></td></tr>
+                            <!-- Annual Service Charges Display (Marked as recurring ongoing expense) -->
+                            <tr class="bg-gray-50 italic text-gray-500"><td class="p-2.5 font-medium">Annual Service Charges (Recurring Operational Cost)</td><td class="p-2.5 text-right" id="viewServiceBreakdown"></td></tr>
                             <tr class="brand-light-bg font-black brand-text border-t-2 border-b-2 border-black">
                                 <td class="p-2.5 uppercase tracking-wider text-[10px]">Total Liquid Capital Requirement</td>
                                 <td class="p-2.5 text-right text-sm" id="viewTotalCost"></td>
@@ -312,7 +314,7 @@
             
             // Adjust form text fields
             for (let i = 1; i <= 5; i++) {
-                const wrapper = document.getElementById(`wrapperRentY1` === `wrapperRentY${i}` ? 'wrapperRentY1' : `wrapperRentY${i}`);
+                const wrapper = document.getElementById(`wrapperRentY${i}`);
                 if (i <= yearsSelected) {
                     wrapper.classList.remove('hidden');
                 } else {
@@ -365,7 +367,7 @@
             const fitOutValue = fitOutToggle ? (parseFloat(document.getElementById('inputFitOutValue').value) || 0) : 0;
             const yearsCount = parseInt(document.getElementById('inputYearsCount').value);
 
-            // Calculation Outlays
+            // Calculation Outlays (Service charges are ongoing operational costs, so they are excluded from upfront requirement)
             const dld = price * dldRate;
             const agency = price * 0.02 * 1.05; 
             const totalCost = price + dld + agency + salesProg + trustee + titleDeed + fitOutValue;
@@ -392,6 +394,7 @@
             setTextOrPlaceholder('viewSalesProg', salesProg ? "AED " + salesProg.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewTrustee', trustee ? "AED " + trustee.toLocaleString() : "", '—');
             setTextOrPlaceholder('viewTitleDeed', titleDeed ? "AED " + titleDeed.toLocaleString() : "", '—');
+            setTextOrPlaceholder('viewServiceBreakdown', service ? "AED " + service.toLocaleString() + " / Year" : "—", '—');
             
             const fitOutRow = document.getElementById('viewFitOutRow');
             if (fitOutToggle && fitOutValue > 0) {
